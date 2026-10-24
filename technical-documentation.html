@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR Review Agent - Technical Documentation</title>
+<meta name="description" content="Architecture, pipeline, security model, audit results and interfaces of PR Review Agent v1.0.">
+<style>
+:root{--ink:#111827;--mute:#4b5563;--rule:#d1d5db;--soft:#e5e7eb;--brand:#14532d;--brand-h:#1f7a45;--tint:#ecf5ef;--code:#f6f8f7;--red:#b42318;--amber:#b45309;--blue:#1d4ed8;
+--serif:Charter,"Iowan Old Style",Georgia,serif;--sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.65 var(--sans);-webkit-text-size-adjust:100%}
+a{color:var(--brand);text-underline-offset:2px}a:hover{color:var(--brand-h)}
+.side{position:fixed;top:0;left:0;bottom:0;width:260px;border-right:1px solid var(--soft);padding:28px 22px;overflow:auto;background:#fff}
+.brand{display:flex;align-items:center;gap:10px;font:700 16px var(--serif);color:var(--brand);margin-bottom:26px}
+.mark{width:26px;height:26px;background:var(--brand);color:#fff;border-radius:3px;display:grid;place-items:center;font:700 13px var(--sans)}
+.side ol{list-style:none;margin:0;padding:0}
+.side li a{display:block;padding:4px 0 4px 10px;border-left:2px solid transparent;color:var(--mute);text-decoration:none;font-size:14px;line-height:1.4}
+.side li.sub a{padding-left:26px;font-size:13px}
+.side li a:hover{color:var(--ink)}
+.side li a.on{color:var(--brand);border-left-color:var(--brand);font-weight:600;background:var(--tint)}
+.tophead{display:none}
+main{margin-left:260px;padding:56px 40px 40px}
+.wrap{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.25;color:var(--ink)}
+h1{font-size:44px;margin:6px 0 6px;letter-spacing:-.5px}
+h2{font-size:27px;margin:56px 0 14px;padding-top:14px;border-top:1px solid var(--rule)}
+h2 .n,h3 .n{display:inline-block;min-width:2.1em;color:var(--brand)}
+h3{font-size:19px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.label{font:700 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand)}
+.lede{font:italic 19px/1.45 var(--serif);color:var(--mute);margin:0 0 22px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);margin:8px 0 8px}
+.meta div{padding:10px 12px 10px 0}
+.meta dt{font:700 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta dd{margin:2px 0 0;font-size:15px}
+.badge{display:inline-block;border:1px solid currentColor;border-radius:4px;padding:0 7px;font:600 12px/20px var(--sans);letter-spacing:.02em;vertical-align:1px}
+.b-ok{color:var(--brand)}.b-red{color:var(--red)}.b-amber{color:var(--amber)}.b-blue{color:var(--blue)}.b-mute{color:var(--mute)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 18px;margin:22px 0;padding:18px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.metrics b{display:block;font:700 34px/1.1 var(--serif);color:var(--brand)}
+.metrics span{font-size:13px;color:var(--mute);line-height:1.35;display:block;margin-top:4px}
+.aside{border-left:3px solid var(--brand);background:var(--tint);padding:10px 16px;margin:20px 0;font-size:15px}
+.aside.note{border-left-color:var(--blue);background:#f4f7fe}
+.aside.warn{border-left-color:var(--amber);background:#fdf6ec}
+.aside b.t{display:block;font:700 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px}
+.aside p{margin:0}
+.tw{overflow-x:auto;margin:16px 0 22px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th{text-align:left;font:700 12px var(--sans);font-variant:small-caps;letter-spacing:.08em;text-transform:lowercase;border-bottom:2px solid var(--ink);padding:7px 12px 7px 0;white-space:nowrap}
+td{padding:8px 12px 8px 0;border-bottom:1px solid var(--soft);vertical-align:top}
+td:first-child,td:nth-child(2){white-space:nowrap}
+code{font:13.5px var(--mono);background:var(--code);border:1px solid var(--soft);border-radius:3px;padding:0 4px}
+pre code{border:0;background:none;padding:0;font-size:13px}
+.cb{margin:16px 0 22px;border:1px solid var(--rule);background:var(--code)}
+.cb .fn{font:12px var(--mono);color:var(--mute);border-bottom:1px solid var(--rule);padding:4px 12px;background:#fff;display:inline-block;border-right:1px solid var(--rule)}
+.cb pre{margin:0;padding:12px 14px;overflow-x:auto;line-height:1.55}
+.k{color:#7a3e9d}.s{color:#1f6f43}.c{color:#6b7280;font-style:italic}.f{color:#1d4ed8}
+.ba{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0 22px}
+.ba .cb{margin:0;min-width:0}
+.ba .hd{font:700 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-bottom:1px solid var(--rule);background:#fff}
+.ba .hd.b{color:var(--red)}.ba .hd.a{color:var(--brand)}
+.ln{display:block;padding:0 14px 0 2px;white-space:pre}
+.ln::before{content:" ";display:inline-block;width:1.4em;text-align:center;color:var(--mute)}
+.ln.d{background:#fbeceb}.ln.d::before{content:"-";color:var(--red)}
+.ln.p{background:#e8f4ec}.ln.p::before{content:"+";color:var(--brand)}
+.ba pre{padding:10px 0;overflow-x:auto}
+figure{margin:22px 0}
+.svgw{overflow-x:auto;border:1px solid var(--soft);padding:10px}
+.svgw svg{display:block;min-width:700px;width:100%;height:auto}
+figcaption{font-size:14px;color:var(--mute);margin-top:8px}
+figcaption b{color:var(--ink)}
+ul,ol.l{padding-left:22px;margin:0 0 14px}li{margin-bottom:5px}
+dl.g dt{font-weight:700;margin-top:12px}dl.g dd{margin:2px 0 0}
+footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-size:13px;color:var(--mute);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media(max-width:899px){
+ .side{position:fixed;top:44px;left:0;right:0;bottom:auto;width:auto;max-height:70vh;border-right:0;border-bottom:1px solid var(--rule);padding:12px 16px;display:none;z-index:20}
+ .side.open{display:block}.side .brand{display:none}
+ .tophead{display:flex;position:sticky;top:0;z-index:30;height:44px;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;border-bottom:1px solid var(--soft)}
+ .tophead .brand{margin:0;font-size:15px}
+ .tophead button{font:600 14px var(--sans);color:var(--brand);background:#fff;border:1px solid var(--brand);border-radius:4px;padding:5px 12px;cursor:pointer}
+ main{margin-left:0;padding:28px 16px 32px}
+ h1{font-size:34px}h2{font-size:23px}
+ .metrics{grid-template-columns:repeat(2,1fr)}
+ .ba{grid-template-columns:1fr}
+}
+@media print{.side,.tophead{display:none!important}main{margin:0;padding:0}.wrap{max-width:none}h2{break-after:avoid}.cb,figure,.aside{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body>
+<div class="tophead"><span class="brand"><span class="mark">PR</span>PR Review Agent</span><button id="tg" aria-expanded="false" aria-controls="toc">Contents</button></div>
+<nav class="side" id="toc" aria-label="Contents">
+<div class="brand"><span class="mark">PR</span>PR Review Agent</div>
+<ol>
+<li><a href="#s1">1&nbsp; Executive summary</a></li>
+<li><a href="#s2">2&nbsp; System architecture</a></li>
+<li class="sub"><a href="#s2-1">2.1&nbsp; Components</a></li>
+<li class="sub"><a href="#s2-2">2.2&nbsp; Package layout</a></li>
+<li class="sub"><a href="#s2-3">2.3&nbsp; Design patterns</a></li>
+<li class="sub"><a href="#s2-4">2.4&nbsp; Technology stack</a></li>
+<li><a href="#s3">3&nbsp; Review pipeline</a></li>
+<li class="sub"><a href="#s3-1">3.1&nbsp; Stages</a></li>
+<li class="sub"><a href="#s3-2">3.2&nbsp; Job state machine</a></li>
+<li><a href="#s4">4&nbsp; Security model</a></li>
+<li><a href="#s5">5&nbsp; Code review highlights</a></li>
+<li class="sub"><a href="#s5-1">5.1&nbsp; Strengths</a></li>
+<li class="sub"><a href="#s5-2">5.2&nbsp; Defects fixed</a></li>
+<li class="sub"><a href="#s5-3">5.3&nbsp; Performance and stability</a></li>
+<li><a href="#s6">6&nbsp; Interfaces and data</a></li>
+<li class="sub"><a href="#s6-1">6.1&nbsp; HTTP endpoints</a></li>
+<li class="sub"><a href="#s6-2">6.2&nbsp; Operator CLI</a></li>
+<li class="sub"><a href="#s6-3">6.3&nbsp; Data model</a></li>
+<li class="sub"><a href="#s6-4">6.4&nbsp; Findings and repo config</a></li>
+<li class="sub"><a href="#s6-5">6.5&nbsp; Configuration</a></li>
+<li><a href="#s7">7&nbsp; Quality engineering</a></li>
+<li><a href="#s8">8&nbsp; Roadmap and open items</a></li>
+<li><a href="#sa">A&nbsp; Glossary</a></li>
+</ol>
+</nav>
+<main><div class="wrap">
+
+<header>
+<div class="label">Technical Documentation</div>
+<h1>PR Review Agent</h1>
+<p class="lede">A self-hostable GitHub App that runs your tests, reads the diff, and posts one review.</p>
+<dl class="meta">
+<div><dt>Version</dt><dd>1.0</dd></div>
+<div><dt>Status</dt><dd><span class="badge b-ok">Released</span></dd></div>
+<div><dt>Last updated</dt><dd>24 October 2026</dd></div>
+<div><dt>Licence</dt><dd><span class="badge b-mute">Commercial</span></dd></div>
+<div><dt>Stack</dt><dd>Python 3.12, FastAPI</dd></div>
+</dl>
+</header>
+
+<section id="s1">
+<h2><span class="n">1</span>Executive summary</h2>
+<p>PR Review Agent is a GitHub App. When a pull request is opened, updated, reopened or marked ready for review, it clones the code, runs the repository's own tests inside a hardened Docker sandbox, and reviews the diff with a language model through LiteLLM. The model is a local Ollama model by default, or any provider you give a key for. The agent correlates findings with failing tests and posts <b>one</b> review with inline comments and suggested fixes.</p>
+<p>It runs on your own infrastructure. Source code goes to the model you configure and nowhere else, and the agent sends no telemetry.</p>
+<h3>Goals achieved</h3>
+<ul>
+<li>One review per commit, even when workers crash, Redis restarts or GitHub returns errors.</li>
+<li>Untrusted code runs only in a sandbox with no network, a read-only root and dropped capabilities.</li>
+<li>Test evidence and model findings appear together, so a failing test raises the severity of the finding that explains it.</li>
+<li>Operators can see every job, retry, cost and dead-lettered failure through an admin API and CLI.</li>
+</ul>
+<div class="metrics">
+<div><b>61</b><span>source modules, about 9,100 lines of Python</span></div>
+<div><b>500+</b><span>automated tests (508 passed in the CI run)</span></div>
+<div><b>~92%</b><span>line coverage in CI (gate: 85%)</span></div>
+<div><b>43 ms</b><span>webhook p95 latency (target under 500 ms, 200 signed deliveries)</span></div>
+<div><b>0 / 0</b><span>lost jobs / duplicate reviews in a 50-job fault-injection run</span></div>
+<div><b>4</b><span>sandbox languages: Python, Node/TS, Go, Rust</span></div>
+</div>
+</section>
+
+<section id="s2">
+<h2><span class="n">2</span>System architecture</h2>
+<h3 id="s2-1"><span class="n">2.1</span>Components</h3>
+<p>The system is two long-running processes and one migration job, backed by Postgres and Redis. Postgres is the source of truth. Redis only delivers job ids to workers.</p>
+<figure>
+<div class="svgw"><svg viewBox="0 0 760 320" role="img" aria-label="Request flow from GitHub through the API, Postgres and Redis to the worker, sandbox and LLM, and back to GitHub" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="13">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#14532d"/></marker></defs>
+<rect x="10" y="115" width="100" height="50" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="60" y="145" text-anchor="middle" fill="#111827" font-weight="700">GitHub</text>
+<rect x="160" y="115" width="140" height="50" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="230" y="136" text-anchor="middle" fill="#14532d" font-weight="700">API</text><text x="230" y="153" text-anchor="middle" fill="#111827">/webhook/github</text>
+<rect x="350" y="40" width="110" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="405" y="59" text-anchor="middle" font-weight="700" fill="#111827">Postgres</text><text x="405" y="76" text-anchor="middle" fill="#111827">job row</text>
+<rect x="350" y="194" width="110" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="405" y="213" text-anchor="middle" font-weight="700" fill="#111827">Redis</text><text x="405" y="230" text-anchor="middle" fill="#111827">queue</text>
+<rect x="510" y="115" width="100" height="50" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="560" y="145" text-anchor="middle" fill="#14532d" font-weight="700">Worker</text>
+<rect x="650" y="40" width="100" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="700" y="59" text-anchor="middle" font-weight="700" fill="#111827">Sandbox</text><text x="700" y="76" text-anchor="middle" fill="#111827">Docker</text>
+<rect x="650" y="194" width="100" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="700" y="213" text-anchor="middle" font-weight="700" fill="#111827">LLM</text><text x="700" y="230" text-anchor="middle" fill="#111827">LiteLLM</text>
+<line x1="110" y1="140" x2="158" y2="140" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="300" y1="128" x2="348" y2="75" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="300" y1="152" x2="348" y2="205" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="460" y1="68" x2="508" y2="125" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="460" y1="214" x2="508" y2="157" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="610" y1="125" x2="648" y2="75" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="610" y1="155" x2="648" y2="205" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
+<path d="M560,165 L560,282 L60,282 L60,167" fill="none" stroke="#14532d" stroke-width="1.8" marker-end="url(#ag)"/>
+<text x="310" y="274" text-anchor="middle" fill="#14532d" font-weight="700">review posted back (inline comments + summary)</text>
+<text x="230" y="105" text-anchor="middle" fill="#4b5563">1 verify, persist</text>
+<text x="230" y="190" text-anchor="middle" fill="#4b5563">2 enqueue</text>
+</svg></div>
+<figcaption><b>Figure 1.</b> Request flow. The API stores the job in Postgres before it enqueues the id in Redis, and only then returns 202.</figcaption>
+</figure>
+<div class="tw"><table>
+<thead><tr><th>Component</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>api</code></td><td>FastAPI service. Webhook ingress, health, metrics and the admin API.</td></tr>
+<tr><td><code>worker</code></td><td>arq worker. Claims jobs, runs the seven stages, sweeps for expired leases.</td></tr>
+<tr><td><code>migrate</code></td><td>Alembic migrations, run once at start-up.</td></tr>
+<tr><td>Postgres 16</td><td>Jobs, stage attempts, findings, events, LLM cost records.</td></tr>
+<tr><td>Redis 7</td><td>Job queue and rate-limit counters.</td></tr>
+<tr><td>Sandbox images</td><td><code>pr-review-sandbox-python:3.12</code>, <code>-node:20</code>, <code>-go:1.22</code>, <code>-rust:1.83</code>.</td></tr>
+<tr><td>LLM</td><td>Any LiteLLM model. Default <code>ollama/qwen2.5-coder:7b</code>, with a smaller triage model.</td></tr>
+</tbody></table></div>
+
+<h3 id="s2-2"><span class="n">2.2</span>Package layout</h3>
+<p>All code lives under <code>src/pr_review</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Package</th><th>Responsibility</th></tr></thead>
+<tbody>
+<tr><td><code>api</code></td><td>Webhook, health, admin routes and the Redis rate limiter.</td></tr>
+<tr><td><code>connectors</code></td><td><code>base.py</code> defines the connector interface; <code>github/</code> holds App auth, the API client and review posting.</td></tr>
+<tr><td><code>core</code></td><td>Settings, repo config, logging, metrics, secret redaction.</td></tr>
+<tr><td><code>llm</code></td><td>Provider wrapper, prompts, analyser, resilience, budgets, prompt-injection guard.</td></tr>
+<tr><td><code>parsers</code></td><td>Diff, chunking, test-report, coverage and lint parsers.</td></tr>
+<tr><td><code>pipeline</code></td><td>Stages, state machine, leases, retry policy, supersede, queue, CLI.</td></tr>
+<tr><td><code>review</code></td><td>Finding models, static checks, correlation, aggregation, summary.</td></tr>
+<tr><td><code>runner</code></td><td>Workspace checkout, language detection, sandbox, dependency install.</td></tr>
+<tr><td><code>storage</code></td><td>SQLAlchemy models, repositories, events, sanitiser, retention, migrations.</td></tr>
+</tbody></table></div>
+
+<h3 id="s2-3"><span class="n">2.3</span>Design patterns</h3>
+<ul>
+<li><b>Durable job before 2xx.</b> The webhook persists the job, then enqueues it. A lost enqueue is repaired by the sweeper.</li>
+<li><b>Idempotent stages.</b> Each attempt is a <code>stage_attempts</code> row, so a restarted job resumes after the last finished stage.</li>
+<li><b>Lease and heartbeat.</b> A worker holds a lease (300 s default) on a running job. A sweeper re-queues jobs whose lease expired.</li>
+<li><b>Supersede.</b> A new head SHA on the same PR marks older jobs superseded, under a per-PR advisory lock.</li>
+<li><b>Dead-letter queue.</b> Jobs that exhaust retries or pass the deadline stop in <code>dead_letter</code> and can be requeued.</li>
+<li><b>LLM resilience.</b> Circuit breaker, retries and fallback models, plus a per-job and a daily USD budget.</li>
+<li><b>Effectively-once posting.</b> A Postgres advisory lock wraps posting, and a hidden SHA marker in the review body lets a retry find and adopt an existing review.</li>
+<li><b>Allowlist-only egress.</b> Dependency install runs behind a proxy that permits only package-registry hosts.</li>
+</ul>
+
+<h3 id="s2-4"><span class="n">2.4</span>Technology stack</h3>
+<div class="tw"><table>
+<thead><tr><th>Package</th><th>Minimum</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td>alembic</td><td>1.20.1</td><td>Schema migrations</td></tr>
+<tr><td>arq</td><td>0.25.0</td><td>Redis job queue and worker</td></tr>
+<tr><td>docker</td><td>7.2.0</td><td>Sandbox control</td></tr>
+<tr><td>fastapi</td><td>0.161.1</td><td>HTTP API</td></tr>
+<tr><td>httpx</td><td>0.28.1</td><td>GitHub client</td></tr>
+<tr><td>litellm</td><td>1.106.2</td><td>Model access</td></tr>
+<tr><td>prometheus-client</td><td>0.26.0</td><td>Metrics</td></tr>
+<tr><td>psycopg[binary]</td><td>3.3.6</td><td>Postgres driver</td></tr>
+<tr><td>pydantic-settings</td><td>2.16.1</td><td>Configuration</td></tr>
+<tr><td>pyjwt[crypto]</td><td>2.15.1</td><td>GitHub App tokens</td></tr>
+<tr><td>pyyaml</td><td>6.0.3</td><td><code>.pr-review.yml</code></td></tr>
+<tr><td>redis</td><td>8.1.0</td><td>Queue and rate limits</td></tr>
+<tr><td>sqlalchemy</td><td>2.1.6</td><td>ORM</td></tr>
+<tr><td>uvicorn</td><td>0.54.0</td><td>ASGI server</td></tr>
+</tbody></table></div>
+<p>Syntax-aware chunking also uses tree-sitter grammars for Go, JavaScript, TypeScript and Rust.</p>
+</section>
+
+<section id="s3">
+<h2><span class="n">3</span>Review pipeline</h2>
+<figure>
+<div class="svgw"><svg viewBox="0 0 780 110" role="img" aria-label="Seven stage pipeline: fetch, detect, test, parse, analyse, aggregate, post" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="14">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker></defs>
+<g stroke="#14532d" stroke-width="1.5" fill="#ecf5ef">
+<rect x="10" y="35" width="92" height="44"/><rect x="122" y="35" width="92" height="44"/><rect x="234" y="35" width="92" height="44"/><rect x="346" y="35" width="92" height="44"/><rect x="458" y="35" width="92" height="44"/><rect x="570" y="35" width="92" height="44"/><rect x="682" y="35" width="88" height="44"/></g>
+<g text-anchor="middle" fill="#111827" font-weight="700">
+<text x="56" y="62">fetch</text><text x="168" y="62">detect</text><text x="280" y="62">test</text><text x="392" y="62">parse</text><text x="504" y="62">analyse</text><text x="616" y="62">aggregate</text><text x="726" y="62">post</text></g>
+<g text-anchor="middle" fill="#4b5563" font-size="12"><text x="56" y="26">1</text><text x="168" y="26">2</text><text x="280" y="26">3</text><text x="392" y="26">4</text><text x="504" y="26">5</text><text x="616" y="26">6</text><text x="726" y="26">7</text></g>
+<g stroke="#111827" stroke-width="1.5" marker-end="url(#a2)"><line x1="102" y1="57" x2="120" y2="57"/><line x1="214" y1="57" x2="232" y2="57"/><line x1="326" y1="57" x2="344" y2="57"/><line x1="438" y1="57" x2="456" y2="57"/><line x1="550" y1="57" x2="568" y2="57"/><line x1="662" y1="57" x2="680" y2="57"/></g>
+<text x="390" y="102" text-anchor="middle" fill="#4b5563" font-size="12">each stage is a stage_attempts row; a restarted job resumes after the last finished stage</text>
+</svg></div>
+<figcaption><b>Figure 2.</b> The seven-stage review pipeline.</figcaption>
+</figure>
+
+<h3 id="s3-1"><span class="n">3.1</span>Stages</h3>
+<p>Timeouts come from <code>pipeline/lease.py</code>. Retry policies come from <code>pipeline/retry.py</code> and are written as attempts, backoff base and cap in seconds, with full jitter. The job as a whole must finish within <code>JOB_DEADLINE_SECONDS</code> (3600 by default), or it is dead-lettered.</p>
+<div class="tw"><table>
+<thead><tr><th>Stage</th><th>Timeout</th><th>Retry</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>fetch</td><td>120 s</td><td>5, 1 s, 60 s</td><td>Reads PR metadata and diff from GitHub, clones the head commit, and checks it still matches the job's SHA. Rejects diffs over 2,000,000 bytes or 300 files.</td></tr>
+<tr><td>detect</td><td>60 s</td><td>3, 1 s, 30 s</td><td>Finds projects and languages, applies <code>.pr-review.yml</code>, and chooses test commands.</td></tr>
+<tr><td>test</td><td>900 s</td><td>2, 5 s, 120 s</td><td>Installs dependencies behind the egress proxy, then runs tests in the sandbox with no network. Each run has its own timeout (300 s by default).</td></tr>
+<tr><td>parse</td><td>60 s</td><td>2, 1 s, 30 s</td><td>Parses test reports, coverage and lint output, and splits the diff into model-sized chunks.</td></tr>
+<tr><td>analyse</td><td>1200 s</td><td>4, 2 s, 120 s</td><td>Runs deterministic checks, then asks the model for findings per chunk and category. Output is validated against a strict schema.</td></tr>
+<tr><td>aggregate</td><td>60 s</td><td>3, 1 s, 30 s</td><td>Correlates findings with failing tests, removes duplicates, applies repo filters, picks the review event.</td></tr>
+<tr><td>post</td><td>120 s</td><td>5, 2 s, 60 s</td><td>Posts one review with inline comments and suggestion blocks, under the posting lock.</td></tr>
+</tbody></table></div>
+<p>The analyse timeout is the setting <code>ANALYSE_TIMEOUT_SECONDS</code>. It is long on purpose, because local models are slow. Retryable errors include timeouts, transport errors, GitHub rate limits and 5xx responses, and a lost lease. Other errors go straight to the dead-letter queue.</p>
+
+<h3 id="s3-2"><span class="n">3.2</span>Job state machine</h3>
+<figure>
+<div class="svgw"><svg viewBox="0 0 760 270" role="img" aria-label="Job states: queued to running, then succeeded, failed, superseded, cancelled or dead_letter; dead_letter returns to queued by admin requeue" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="14">
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker><marker id="a3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#14532d"/></marker></defs>
+<rect x="20" y="100" width="110" height="44" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="75" y="127" text-anchor="middle" font-weight="700" fill="#111827">queued</text>
+<rect x="210" y="100" width="110" height="44" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="265" y="127" text-anchor="middle" font-weight="700" fill="#14532d">running</text>
+<rect x="450" y="8" width="140" height="34" fill="#fff" stroke="#14532d" stroke-width="1.5"/><text x="520" y="30" text-anchor="middle" fill="#14532d" font-weight="700">succeeded</text>
+<rect x="450" y="54" width="140" height="34" fill="#fff" stroke="#b45309" stroke-width="1.5"/><text x="520" y="76" text-anchor="middle" fill="#b45309" font-weight="700">failed</text>
+<rect x="450" y="100" width="140" height="34" fill="#fff" stroke="#4b5563" stroke-width="1.5"/><text x="520" y="122" text-anchor="middle" fill="#4b5563" font-weight="700">superseded</text>
+<rect x="450" y="146" width="140" height="34" fill="#fff" stroke="#4b5563" stroke-width="1.5"/><text x="520" y="168" text-anchor="middle" fill="#4b5563" font-weight="700">cancelled</text>
+<rect x="450" y="192" width="140" height="34" fill="#fff" stroke="#b42318" stroke-width="1.5"/><text x="520" y="214" text-anchor="middle" fill="#b42318" font-weight="700">dead_letter</text>
+<line x1="130" y1="122" x2="208" y2="122" stroke="#111827" stroke-width="1.5" marker-end="url(#a3)"/>
+<g stroke="#111827" stroke-width="1.5" marker-end="url(#a3)" fill="none">
+<line x1="320" y1="110" x2="448" y2="27"/><line x1="320" y1="115" x2="448" y2="71"/><line x1="320" y1="122" x2="448" y2="117"/><line x1="320" y1="130" x2="448" y2="162"/><line x1="320" y1="137" x2="448" y2="209"/></g>
+<path d="M520,226 L520,254 L75,254 L75,146" fill="none" stroke="#14532d" stroke-width="1.8" marker-end="url(#a3g)"/>
+<text x="300" y="246" text-anchor="middle" fill="#14532d" font-weight="700">admin requeue</text>
+<text x="640" y="30" fill="#4b5563" font-size="12">review posted</text>
+<text x="640" y="76" fill="#4b5563" font-size="12">retry returns to queued</text>
+<text x="640" y="122" fill="#4b5563" font-size="12">newer head SHA</text>
+<text x="640" y="208" fill="#4b5563" font-size="12">retries or</text><text x="640" y="222" fill="#4b5563" font-size="12">deadline spent</text>
+</svg></div>
+<figcaption><b>Figure 3.</b> Job states. Every move is one transaction that updates the job row and appends an event. Allowed edges are listed in <code>TRANSITIONS</code> in <code>pipeline/state.py</code>.</figcaption>
+</figure>
+<p>Succeeded, superseded and cancelled are final. Dead-letter is final except for the operator requeue edge, which clears the dead-letter reason. Illegal moves raise <code>TransitionError</code>.</p>
+</section>
+
+<section id="s4">
+<h2><span class="n">4</span>Security model</h2>
+<p>The agent runs code from pull requests, so it assumes every repository input is hostile.</p>
+<h3>GitHub App permissions</h3>
+<p>The App requests the minimum: pull requests <b>write</b>, contents <b>read</b>, metadata <b>read</b>.</p>
+<h3>Webhook ingress</h3>
+<ul>
+<li>The HMAC-SHA256 signature is checked on the raw body before any JSON is parsed.</li>
+<li>Bodies over 5 MiB are rejected, both by the declared length and while streaming.</li>
+<li>Rate limits are fixed 60-second windows in Redis: 60 requests per IP and 120 per installation. The installation key is used only after the signature passes.</li>
+<li>If Redis is down the limiter fails open, so deliveries are not lost. This is intentional and documented.</li>
+<li>Only the actions <code>opened</code>, <code>synchronize</code>, <code>reopened</code> and <code>ready_for_review</code> create jobs. Duplicate delivery ids are ignored.</li>
+</ul>
+<h3>Sandbox</h3>
+<div class="tw"><table>
+<thead><tr><th>Control</th><th>Setting</th></tr></thead>
+<tbody>
+<tr><td>Network</td><td><code>network_mode=none</code> for test runs</td></tr>
+<tr><td>Filesystem</td><td>Read-only root; writable tmpfs <code>/tmp</code> and a per-run output directory</td></tr>
+<tr><td>Privileges</td><td>All capabilities dropped; <code>no-new-privileges</code>; non-root user; default seccomp</td></tr>
+<tr><td>Resources</td><td>PID limit (128), memory (512 MiB default), CPUs (1.0 default), ulimits, no swap, killed on timeout</td></tr>
+<tr><td>Environment</td><td>Empty, plus an explicit allowlist. The host environment is never forwarded.</td></tr>
+<tr><td>Images</td><td>Only pinned tags in an allowlist: the four sandbox images plus <code>python:3.12-slim</code> and <code>alpine:3.20</code></td></tr>
+</tbody></table></div>
+<p>For stronger isolation, run Docker rootless or use the gVisor runtime for the sandbox containers.</p>
+<h3>Egress proxy for dependency install</h3>
+<p>Install is the only step with network access. It runs on a per-run internal Docker network that contains a single proxy container, which allows only <code>CONNECT host:443</code> to registry hosts: <code>pypi.org</code>, <code>files.pythonhosted.org</code>, <code>registry.npmjs.org</code>, <code>proxy.golang.org</code>, <code>index.crates.io</code> and <code>static.crates.io</code>. Set <code>SANDBOX_PIP_INDEX_URL</code> to use a private index. Installed packages are copied out, and the tests then run with no network.</p>
+<h3>Model input and output</h3>
+<ul>
+<li><b>Prompt-injection guard</b> (<code>llm/guard.py</code>). Untrusted blocks are re-delimited with a per-request nonce, delimiter-like text is neutralised, injection signals are counted and logged, and only system and user roles are sent. No tools are given to the model. Payload text is never logged, only counts.</li>
+<li><b>Secret redaction</b> (<code>core/redaction.py</code>) runs over all content before it reaches a model.</li>
+<li><b>Persistence sanitiser</b> (<code>storage/sanitize.py</code>) cleans text at the database boundary, so error messages and reasons cannot carry source or diff text.</li>
+</ul>
+<h3>Data handling</h3>
+<p>Job data is purged after <code>RETENTION_DAYS</code> (30 by default) by a daily job at <code>RETENTION_HOUR_UTC</code> (03:00 by default). The admin API is disabled until <code>ADMIN_TOKEN</code> is set, and then requires a Bearer token. There is no telemetry.</p>
+</section>
+
+<section id="s5">
+<h2><span class="n">5</span>Code review highlights</h2>
+<p>Before release we audited the whole code base and ran it against real services. This section records what held up, what we fixed, and the measured results.</p>
+<h3 id="s5-1"><span class="n">5.1</span>Strengths</h3>
+<ul>
+<li>Postgres is the single source of truth. Redis loss delays work but does not lose it.</li>
+<li>State transitions are guarded updates with an event written in the same transaction, so history is always consistent.</li>
+<li>Model output is validated against a frozen, versioned schema. Findings that do not anchor to a changed line are rejected and counted, not hidden.</li>
+<li>Deterministic checks (secret scan, patterns, lint) run beside the model and take precedence over it.</li>
+<li>Strict typing (<code>mypy --strict</code>) and a coverage gate in CI.</li>
+</ul>
+
+<h3 id="s5-2"><span class="n">5.2</span>Defects found and fixed during final verification</h3>
+
+<p><b>a) Worker killed long LLM stages.</b> arq applies a 300 s default job timeout, shorter than the analyse stage allows. The worker now uses the job deadline.</p>
+<div class="ba">
+<div class="cb"><div class="hd b">Before</div><pre><code><span class="ln"><span class="k">class</span> WorkerSettings:</span><span class="ln">    max_jobs = CFG.worker_max_jobs</span><span class="ln">    keep_result = <span class="k">0</span></span></code></pre></div>
+<div class="cb"><div class="hd a">After</div><pre><code><span class="ln"><span class="k">class</span> WorkerSettings:</span><span class="ln">    max_jobs = CFG.worker_max_jobs</span><span class="ln p">    job_timeout = CFG.job_deadline_seconds</span><span class="ln">    keep_result = <span class="k">0</span></span></code></pre></div>
+</div>
+
+<p><b>b) A model finding could hide a deterministic one.</b> De-duplication ranked overlapping findings by severity only, so a CRITICAL model finding could silently replace a static SQL-injection finding. Deterministic findings now sort first (<code>review/correlate.py</code>).</p>
+<div class="ba">
+<div class="cb"><div class="hd b">Before</div><pre><code><span class="ln">out.sort(key=<span class="k">lambda</span> p: (</span><span class="ln d">    SEVERITY_ORDER.index(p[0].finding.severity),</span><span class="ln">    p[1], ...</span><span class="ln">))</span></code></pre></div>
+<div class="cb"><div class="hd a">After</div><pre><code><span class="ln">out.sort(key=<span class="k">lambda</span> p: (</span><span class="ln p">    DETERMINISTIC.match(p[0].finding.summary) <span class="k">is None</span>,</span><span class="ln">    SEVERITY_ORDER.index(p[0].finding.severity),</span><span class="ln">    p[1], ...</span><span class="ln">))</span></code></pre></div>
+</div>
+
+<p><b>c) Duplicate reviews after a lease was reclaimed during a GitHub outage.</b> Two workers could both reach the post step. Posting now runs under a Postgres advisory lock on (repo, PR, SHA) in <code>DbReviewStore.exclusive</code>. Inside the lock, a review already carrying the SHA marker is recorded through <code>_adopt</code> instead of being created again.</p>
+<div class="cb"><span class="fn">connectors/github/posting.py</span><pre><code><span class="k">async def</span> <span class="f">post</span>(self, pr, head_sha, plan, summary_md, suggestions):
+    lock = self._store.exclusive(pr.repo, pr.number, head_sha) <span class="k">if</span> self._store <span class="k">else</span> nullcontext()
+    <span class="k">async with</span> lock:
+        <span class="k">return await</span> self._post_locked(pr, head_sha, plan, summary_md, suggestions)</code></pre></div>
+
+<p><b>d) Out-of-memory runs were not detected on cgroup v2.</b> Docker reported <code>OOMKilled=false</code> when a child process was killed. The sandbox only sends SIGKILL on timeout, so an exit code 137 without a timeout is now treated as the memory limit.</p>
+<div class="ba">
+<div class="cb"><div class="hd b">Before</div><pre><code><span class="ln d">oom = bool(state.get(<span class="s">"OOMKilled"</span>))</span></code></pre></div>
+<div class="cb"><div class="hd a">After</div><pre><code><span class="ln p">oom = bool(state.get(<span class="s">"OOMKilled"</span>)) <span class="k">or</span> (code == <span class="k">137</span> <span class="k">and not</span> timed_out)</span></code></pre></div>
+</div>
+
+<p><b>e) The container image had no git.</b> The worker clones with the git CLI, so every clone failed in the packaged image. The runtime stage of the <code>Dockerfile</code> now installs git and CA certificates.</p>
+
+<p><b>f) Three filelock CVEs in a transitive dependency.</b> litellm capped filelock below 4.0, and every 3.x release carried open advisories. filelock is used only through model-hub caching, whose API is unchanged in 4.x, so we override the cap.</p>
+<div class="cb"><span class="fn">pyproject.toml</span><pre><code>[<span class="k">tool.uv</span>]
+override-dependencies = [<span class="s">"filelock&gt;=4.2.1"</span>]</code></pre></div>
+
+<p><b>g) Admin requeue bypassed the state machine.</b> It wrote the status directly. <code>DEAD_LETTER</code> to <code>QUEUED</code> is now an explicit edge in <code>TRANSITIONS</code>, and requeue goes through <code>state.transition</code>, so the event log and lease fields stay correct.</p>
+<div class="cb"><span class="fn">pipeline/state.py</span><pre><code>DEAD_LETTER: frozenset({QUEUED}),   <span class="c"># operator requeue override</span></code></pre></div>
+
+<h3 id="s5-3"><span class="n">5.3</span>Performance and stability results</h3>
+<div class="tw"><table>
+<thead><tr><th>Test</th><th>Setup</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>Webhook benchmark</td><td>200 signed deliveries</td><td>p50 33 ms, p95 43 ms, p99 65 ms (target: p95 under 500 ms)</td></tr>
+<tr><td>Large PR</td><td>About 420 changed lines through all 7 stages</td><td>Finished within the 10-minute budget</td></tr>
+<tr><td>Fault injection</td><td>50 jobs; 3 worker SIGKILLs; a Redis restart; a window of LLM 500, 429 and timeout errors; a GitHub 502 window and lost responses</td><td>50 succeeded, 0 lost, 0 duplicate reviews</td></tr>
+<tr><td>End to end on GitHub</td><td>Real GitHub App, varied scenario library</td><td>SQL injection, hard-coded secret, unsafe deserialization, off-by-one, None dereference and mutable default were each reported. A clean PR was not flooded with comments.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s6">
+<h2><span class="n">6</span>Interfaces and data</h2>
+<h3 id="s6-1"><span class="n">6.1</span>HTTP endpoints</h3>
+<div class="tw"><table>
+<thead><tr><th>Method and path</th><th>Auth</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>POST /webhook/github</code></td><td>HMAC signature</td><td>Receives PR events; returns 202 after the job is stored.</td></tr>
+<tr><td><code>GET /healthz</code></td><td>none</td><td>Liveness.</td></tr>
+<tr><td><code>GET /readyz</code></td><td>none</td><td>Readiness.</td></tr>
+<tr><td><code>GET /metrics</code></td><td>none</td><td>Prometheus metrics.</td></tr>
+<tr><td><code>GET /admin/jobs</code></td><td>Bearer</td><td>List jobs.</td></tr>
+<tr><td><code>GET /admin/jobs/{id}</code></td><td>Bearer</td><td>One job.</td></tr>
+<tr><td><code>GET /admin/jobs/{id}/timeline</code></td><td>Bearer</td><td>Ordered events for a job.</td></tr>
+<tr><td><code>GET /admin/dlq</code></td><td>Bearer</td><td>List dead-lettered jobs.</td></tr>
+<tr><td><code>GET /admin/dlq/{id}</code></td><td>Bearer</td><td>One dead-lettered job.</td></tr>
+<tr><td><code>POST /admin/dlq/{id}/requeue</code></td><td>Bearer</td><td>Move a job from dead_letter to queued.</td></tr>
+<tr><td><code>GET /admin/costs</code></td><td>Bearer</td><td>LLM spend.</td></tr>
+</tbody></table></div>
+
+<h3 id="s6-2"><span class="n">6.2</span>Operator CLI</h3>
+<p>The <code>pr-review</code> console script (or <code>python -m pr_review.pipeline.cli</code>) talks to the database directly.</p>
+<div class="cb"><span class="fn">shell</span><pre><code>pr-review jobs list
+pr-review jobs show &lt;id&gt;
+pr-review dlq list
+pr-review dlq show &lt;id&gt;
+pr-review dlq requeue &lt;id&gt;
+pr-review costs</code></pre></div>
+
+<h3 id="s6-3"><span class="n">6.3</span>Data model</h3>
+<div class="tw"><table>
+<thead><tr><th>Table</th><th>Holds</th><th>Key columns</th></tr></thead>
+<tbody>
+<tr><td><code>jobs</code></td><td>One review request per PR head SHA</td><td>repo, pr_number, head_sha, installation_id, status, leased_by, lease_expires_at, dead_letter_reason</td></tr>
+<tr><td><code>delivery_keys</code></td><td>Webhook de-duplication</td><td>delivery_id, job_id</td></tr>
+<tr><td><code>stage_attempts</code></td><td>One row per stage attempt</td><td>stage, attempt_no, status, error, next_retry_at</td></tr>
+<tr><td><code>test_runs</code></td><td>Sandbox test results</td><td>framework, exit_code, passed, failed, skipped, duration_ms, timed_out</td></tr>
+<tr><td><code>findings</code></td><td>Persisted findings</td><td>severity, category, file_path, line_start, line_end, summary, confidence</td></tr>
+<tr><td><code>llm_calls</code></td><td>Model usage and cost</td><td>model, prompt_tokens, completion_tokens, cost_usd, latency_ms, outcome</td></tr>
+<tr><td><code>comments</code></td><td>What was posted to GitHub</td><td>finding_id, github_comment_id, kind (inline, summary, review)</td></tr>
+<tr><td><code>events</code></td><td>Append-only job log</td><td>type, stage, schema_version, payload</td></tr>
+</tbody></table></div>
+
+<h3 id="s6-4"><span class="n">6.4</span>Findings and repository config</h3>
+<p>A finding has these fields: <code>severity</code> (CRITICAL, MAJOR, MINOR, INFO), <code>category</code> (correctness, security, performance, style), <code>file_path</code>, <code>line_start</code>, <code>line_end</code>, <code>summary</code> (up to 300 characters), <code>rationale</code> (up to 2000), optional <code>suggestion</code> (up to 4000) and <code>confidence</code> (0 to 1).</p>
+<p>Place a <code>.pr-review.yml</code> in the repository root to tune a review:</p>
+<div class="tw"><table>
+<thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>test_commands</code></td><td>Commands keyed by project folder; <code>.</code> is the repo root.</td></tr>
+<tr><td><code>test_timeout_seconds</code></td><td>Lowers the test time budget. It cannot exceed the operator's limit.</td></tr>
+<tr><td><code>ignore</code></td><td>Glob patterns for files to skip.</td></tr>
+<tr><td><code>categories</code></td><td>Which categories to report.</td></tr>
+<tr><td><code>min_severity</code></td><td>Lowest severity to post. Default INFO.</td></tr>
+<tr><td><code>tests_disabled</code></td><td>Skip the test stage. Default false.</td></tr>
+</tbody></table></div>
+<div class="cb"><span class="fn">.pr-review.yml</span><pre><code><span class="k">test_commands</span>:
+  <span class="s">"."</span>: [<span class="s">"pytest"</span>, <span class="s">"-q"</span>]
+  <span class="s">"web"</span>: [<span class="s">"npm"</span>, <span class="s">"test"</span>]
+<span class="k">test_timeout_seconds</span>: 240
+<span class="k">ignore</span>: [<span class="s">"docs/**"</span>]
+<span class="k">min_severity</span>: MINOR</code></pre></div>
+
+<h3 id="s6-5"><span class="n">6.5</span>Configuration</h3>
+<p>Settings are environment variables. A selection:</p>
+<div class="tw"><table>
+<thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>GITHUB_APP_ID</code></td><td>required</td><td>App identifier</td></tr>
+<tr><td><code>GITHUB_PRIVATE_KEY</code> / <code>_PATH</code></td><td>required</td><td>App key inline, or a path to it</td></tr>
+<tr><td><code>GITHUB_WEBHOOK_SECRET</code></td><td>required</td><td>Webhook HMAC secret</td></tr>
+<tr><td><code>DATABASE_URL</code></td><td>required</td><td>Postgres connection</td></tr>
+<tr><td><code>REDIS_URL</code></td><td>required</td><td>Redis connection</td></tr>
+<tr><td><code>LLM_REVIEW_MODEL</code></td><td><code>ollama/qwen2.5-coder:7b</code></td><td>Review model</td></tr>
+<tr><td><code>LLM_TRIAGE_MODEL</code></td><td><code>ollama/qwen2.5-coder:1.5b</code></td><td>Cheaper triage model</td></tr>
+<tr><td><code>LLM_FALLBACK_MODELS</code></td><td>empty</td><td>Models tried when the primary fails</td></tr>
+<tr><td><code>LLM_API_KEY</code></td><td>unset</td><td>Provider key; not needed for Ollama</td></tr>
+<tr><td><code>OLLAMA_API_BASE</code></td><td><code>http://localhost:11434</code></td><td>Ollama address</td></tr>
+<tr><td><code>LLM_JOB_BUDGET_USD</code></td><td>1.0</td><td>Spend cap per job</td></tr>
+<tr><td><code>LLM_DAILY_BUDGET_USD</code></td><td>20.0</td><td>Spend cap per day</td></tr>
+<tr><td><code>WORKER_MAX_JOBS</code></td><td>4</td><td>Concurrent jobs per worker</td></tr>
+<tr><td><code>WORKER_LEASE_SECONDS</code></td><td>300</td><td>Lease length</td></tr>
+<tr><td><code>JOB_DEADLINE_SECONDS</code></td><td>3600</td><td>Time from creation before dead-letter</td></tr>
+<tr><td><code>ANALYSE_TIMEOUT_SECONDS</code></td><td>1200</td><td>Analyse stage timeout</td></tr>
+<tr><td><code>SANDBOX_MEMORY_BYTES</code></td><td>536870912</td><td>Memory per sandbox container (512 MiB)</td></tr>
+<tr><td><code>SANDBOX_CPUS</code></td><td>1.0</td><td>CPUs per sandbox container</td></tr>
+<tr><td><code>REQUEST_CHANGES_ON_CRITICAL</code></td><td>false</td><td>Use REQUEST_CHANGES when a CRITICAL finding exists; otherwise COMMENT</td></tr>
+<tr><td><code>RETENTION_DAYS</code></td><td>30</td><td>Days to keep job data</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="s7">
+<h2><span class="n">7</span>Quality engineering</h2>
+<h3>Testing approach</h3>
+<p>Tests use real services. They run against Postgres, Redis, a Docker daemon, a real Ollama server and a local HTTP server that injects faults. End-to-end tests use a real GitHub App. Core services are not mocked.</p>
+<div class="tw"><table>
+<thead><tr><th>Marker</th><th>Needs</th></tr></thead>
+<tbody>
+<tr><td><code>docker</code></td><td>A Docker daemon</td></tr>
+<tr><td><code>llm</code></td><td>A real Ollama server</td></tr>
+<tr><td><code>github</code></td><td>The real GitHub API</td></tr>
+<tr><td><code>e2e</code></td><td>Full webhook-to-posted-review flow</td></tr>
+<tr><td><code>perf</code></td><td>Benchmarks, run explicitly</td></tr>
+<tr><td><code>load</code></td><td>Fault-injection load tests, run explicitly</td></tr>
+</tbody></table></div>
+<h3>Continuous integration</h3>
+<p>The <code>ci</code> workflow runs on pushes to <code>main</code> and on pull requests. It runs these steps in order:</p>
+<ol class="l">
+<li><code>ruff check</code> on <code>src</code> and <code>tests</code>.</li>
+<li><code>mypy src</code> in strict mode.</li>
+<li><code>pytest</code> with <code>qwen2.5-coder:0.5b</code> served by Ollama, excluding <code>load</code> and <code>perf</code>, and failing under 85% coverage.</li>
+<li><code>pip-audit</code> on locked dependencies.</li>
+<li>A check that no TODO markers remain.</li>
+</ol>
+<p>Load and performance tests run on demand. The <code>main</code> branch requires the <code>ci</code> check and forbids force pushes.</p>
+</section>
+
+<section id="s8">
+<h2><span class="n">8</span>Roadmap and open items</h2>
+<div class="tw"><table>
+<thead><tr><th>Priority</th><th>Item</th><th>Area</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><span class="badge b-red">P1</span></td><td>A failure-summary review shares the commit marker, so a job requeued after a dead-letter summary is skipped. Give failure summaries their own marker.</td><td>Posting</td><td>Open</td></tr>
+<tr><td><span class="badge b-red">P1</span></td><td>Production hosting: an always-on server for the hosted plan. The current deployment is a single node.</td><td>Operations</td><td>Open</td></tr>
+<tr><td><span class="badge b-amber">P2</span></td><td>Consolidate the three GitHub retry loops (<code>client.py</code>, <code>auth.py</code>, <code>posting.py</code>).</td><td>Connector</td><td>Open</td></tr>
+<tr><td><span class="badge b-amber">P2</span></td><td>Add a proper <code>source</code> field to findings instead of a summary prefix.</td><td>Review</td><td>Open</td></tr>
+<tr><td><span class="badge b-amber">P2</span></td><td>Multi-line suggestion blocks. <code>InlineComment</code> has no <code>start_line</code>.</td><td>Posting</td><td>Open</td></tr>
+<tr><td><span class="badge b-amber">P2</span></td><td>Draft PRs are reviewed. Add an opt-out.</td><td>API</td><td>Open</td></tr>
+<tr><td><span class="badge b-blue">P3</span></td><td>GitHub Enterprise support. The API base URL is hard-coded to api.github.com.</td><td>Connector</td><td>Open</td></tr>
+<tr><td><span class="badge b-blue">P3</span></td><td>Per-installation LLM budgets and billing hooks for the hosted plan.</td><td>LLM</td><td>Open</td></tr>
+</tbody></table></div>
+<div class="aside warn"><b class="t">Technical debt</b><p>The three GitHub retry loops and the summary-prefix convention for finding source are the main debts. Both work and are covered by tests, but each makes later changes to the connector and the review model harder than they need to be.</p></div>
+</section>
+
+<section id="sa">
+<h2><span class="n">A</span>Appendix: Glossary</h2>
+<dl class="g">
+<dt>Lease</dt><dd>A time-limited claim a worker holds on a running job. If it expires, the sweeper re-queues the job.</dd>
+<dt>Supersede</dt><dd>Mark an older job obsolete because a newer commit arrived on the same pull request.</dd>
+<dt>Dead letter</dt><dd>The state of a job that exhausted its retries or deadline. An operator can requeue it.</dd>
+<dt>Deterministic finding</dt><dd>A finding from a rule-based check (secret scan, pattern or lint) rather than from the model. It wins over an overlapping model finding.</dd>
+<dt>Marker</dt><dd>A hidden comment holding the reviewed commit SHA in a posted review. It lets a retry find an existing review instead of posting a second one.</dd>
+</dl>
+</section>
+
+<footer><span>PR Review Agent &middot; Technical Documentation &middot; v1.0</span><span>&copy; 2026</span></footer>
+</div></main>
+<script>
+(function(){
+var tg=document.getElementById('tg'),toc=document.getElementById('toc');
+tg.addEventListener('click',function(){var o=toc.classList.toggle('open');tg.setAttribute('aria-expanded',o)});
+toc.addEventListener('click',function(e){if(e.target.tagName==='A')toc.classList.remove('open')});
+var links={};toc.querySelectorAll('a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a});
+var cur=null;
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){
+ if(cur)cur.classList.remove('on');cur=links[e.target.id];if(cur){cur.classList.add('on')}}})},{rootMargin:'0px 0px -75% 0px'});
+Object.keys(links).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el)});
+})();
+</script>
+</body>
+</html>
