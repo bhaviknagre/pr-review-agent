@@ -5,37 +5,85 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PR Review Agent</title>
 <meta name="description" content="AI pull-request reviews for GitHub: runs your tests in a secure sandbox, reviews the change with AI, and posts one review with inline comments.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fbfbf9;--card:#fff;--ink:#1d1d1b;--muted:#5c5c57;--line:#e4e3de;--accent:#2563eb;--accent-soft:#eaf1fe}
-@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1c1c1a;--ink:#ecebe6;--muted:#a3a29b;--line:#2f2f2c;--accent:#6ea0ff;--accent-soft:#1d2a44}}
+:root{--bg:#ffffff;--soft:#f6f8f6;--ink:#0f1a14;--muted:#56625b;--line:#e3e8e4;--brand:#14532d;--brand-2:#1f7a45;--brand-soft:#ecf5ef;--hl:#fde68a;--crit:#b42318;--crit-soft:#fef3f2;--code:#f4f6f4}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:760px;margin:0 auto;padding:56px 16px 80px}
-h1{font-size:36px;line-height:1.2;margin:0 0 12px}
-.lead{font-size:18px;color:var(--muted);margin:0 0 20px}
-.cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px}
-h2{font-size:20px;margin:48px 0 12px}
-.docs{display:grid;gap:12px}
-.doc{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit}
-.doc:hover{border-color:var(--accent)}
-.doc b{display:block;color:var(--accent);margin-bottom:4px}
-.doc span{color:var(--muted);font-size:15px}
-footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
-@media (max-width:600px){h1{font-size:28px}.lead{font-size:16px}}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Plus Jakarta Sans",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand-2);text-underline-offset:3px}
+.topbar{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.topbar .in{max-width:1000px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:800;letter-spacing:-.01em}
+.navlink{font-size:14px;font-weight:600;color:var(--ink);text-decoration:none;border:1.5px solid var(--ink);padding:7px 14px;border-radius:8px}
+.navlink:hover{background:var(--ink);color:#fff}
+code,pre{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+.cta{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:8px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.cta:hover{background:var(--brand-2)}
+.mark{background:linear-gradient(transparent 62%,var(--hl) 62%);padding:0 2px}
+.review{background:#fff;border:1px solid var(--line);border-radius:10px;font-size:14px;box-shadow:0 12px 32px -18px rgba(15,26,20,.35);overflow:hidden}
+.review .hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--soft);font-size:13px;color:var(--muted)}
+.review .hd b{color:var(--ink)}
+.review .file{padding:8px 14px;font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.review .ln{font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:3px 14px 3px 44px;text-indent:-30px;white-space:pre-wrap;overflow-wrap:anywhere}
+.review .add{background:#e9f7ee}
+.review .note code{overflow-wrap:anywhere}
+.review .note{margin:10px 14px 14px;border:1px solid #f4c7c3;background:var(--crit-soft);border-radius:8px;padding:10px 12px}
+.review .sev{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--crit);padding:2px 7px;border-radius:4px;margin-right:6px}
+footer{margin-top:64px;padding:20px 0;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+.hero>*{min-width:0}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px 40px}
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;padding:64px 0 48px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-2);margin:0 0 12px}
+h1{font-size:46px;line-height:1.08;letter-spacing:-.03em;margin:0 0 16px;font-weight:800}
+.lead{font-size:18px;color:var(--muted);margin:0 0 24px;max-width:34em}
+.sub{font-size:13.5px;color:var(--muted);margin-top:12px}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip div{padding:20px 18px}
+.strip div+div{border-left:1px solid var(--line)}
+.strip b{display:block;font-size:15px;margin-bottom:4px}
+.strip span{color:var(--muted);font-size:14.5px}
+h2{font-size:24px;letter-spacing:-.02em;margin:56px 0 16px}
+.docs a{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.docs a:first-child{border-top:1px solid var(--line)}
+.docs b{font-size:17px}
+.docs span{display:block;color:var(--muted);font-size:14.5px;font-weight:400}
+.docs i{font-style:normal;font-weight:700;color:var(--brand-2);white-space:nowrap}
+.docs a:hover b{color:var(--brand-2)}
+@media (max-width:820px){.hero{grid-template-columns:1fr;padding-top:40px}h1{font-size:34px}.strip{grid-template-columns:1fr}.strip div+div{border-left:0;border-top:1px solid var(--line)}}
 </style>
 </head>
 <body>
+<div class="topbar"><div class="in"><a class="brand" href="index.html"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#14532d"/><path d="M8 9h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="#fff"/><path d="M11.5 15.5l3 3 6-6.5" fill="none" stroke="#14532d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>PR Review Agent</span></a><a class="navlink" href="https://github.com/apps/pr-review-agent-github/installations/new">Install</a></div></div>
 <div class="wrap">
-  <h1>PR Review Agent</h1>
-  <p class="lead">AI code review for every pull request on GitHub. It runs your tests in a secure sandbox, reviews the change with AI, and posts one review with inline comments. No workflow files, no code changes in your repo.</p>
-  <a class="cta" href="https://github.com/apps/pr-review-agent-github/installations/new">Install on GitHub</a>
-
+  <section class="hero">
+    <div>
+      <p class="kicker">Code review for GitHub</p>
+      <h1>Every pull request, <span class="mark">reviewed before</span> a human looks at it.</h1>
+      <p class="lead">PR Review Agent runs your tests in a locked-down sandbox, reads the change, and leaves one clear review with comments on the exact lines that need attention.</p>
+      <a class="cta" href="https://github.com/apps/pr-review-agent-github/installations/new">Install on GitHub &rarr;</a>
+      <p class="sub">Two-minute setup. Nothing to add to your repository.</p>
+    </div>
+    <div class="review" aria-label="Example review comment">
+  <div class="hd"><b>pr-review-agent</b> reviewed · user_lookup.py</div>
+  <div class="file">user_lookup.py</div>
+  <div class="ln">5    """Return the user row for this username."""</div>
+  <div class="ln add">6 +  query = "SELECT id, email FROM users WHERE name = '" + username + "'"</div>
+  <div class="ln">7    return conn.execute(query).fetchone()</div>
+  <div class="note"><span class="sev">CRITICAL</span><b>SQL injection</b><br>Building the query with string concatenation lets a crafted username run its own SQL. Use a parameterised query: <code>conn.execute("... WHERE name = ?", (username,))</code></div>
+</div>
+  </section>
+  <div class="strip">
+    <div><b>Runs your tests</b><span>Python, JavaScript/TypeScript, Go and Rust, detected automatically.</span></div>
+    <div><b>Finds real problems</b><span>Security, correctness and performance issues, tied to failing tests.</span></div>
+    <div><b>One review per commit</b><span>No comment spam. Suggested fixes you can apply in one click.</span></div>
+  </div>
   <h2>Guides</h2>
   <div class="docs">
-    <a class="doc" href="setup-and-deployment-guide.html"><b>Setup &amp; Deployment Guide</b><span>Install in 2 minutes (hosted) or run it on your own server (self-hosted).</span></a>
+    <a href="setup-and-deployment-guide.html"><div><b>Setup &amp; Deployment Guide</b><span>Install in two minutes, or run it on your own server.</span></div><i>Read &rarr;</i></a>
   </div>
-
-  <footer>PR Review Agent · October 2026</footer>
+  <footer><span>PR Review Agent</span><span>&copy; 2026</span></footer>
 </div>
 </body>
 </html>
