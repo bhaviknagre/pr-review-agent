@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR Review Agent — Setup &amp; Deployment Guide</title>
+<meta name="description" content="Add AI pull-request reviews to any GitHub repository in two minutes, or self-host the agent on your own server.">
+<style>
+:root{--bg:#fbfbf9;--card:#fff;--ink:#1d1d1b;--muted:#5c5c57;--line:#e4e3de;--accent:#2563eb;--accent-soft:#eaf1fe;--code:#f3f2ee;--good:#15803d;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--card:#1c1c1a;--ink:#ecebe6;--muted:#a3a29b;--line:#2f2f2c;--accent:#6ea0ff;--accent-soft:#1d2a44;--code:#242421;--good:#4ade80;--warn:#fbbf24}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:40px 16px 80px}
+header.hero{padding:8px 0 24px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.badge{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:999px}
+h1{font-size:34px;line-height:1.2;margin:14px 0 10px}
+h2{font-size:24px;margin:48px 0 12px;padding-top:8px}
+h3{font-size:18px;margin:32px 0 8px}
+p{margin:10px 0}
+.lead{font-size:18px;color:var(--muted)}
+a{color:var(--accent)}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:24px 0}
+nav.toc b{display:block;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:20px}
+nav.toc li{margin:2px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:block;overflow-x:auto}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{background:var(--code);font-weight:600}
+tr:last-child td{border-bottom:0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;background:var(--code);padding:2px 5px;border-radius:5px;overflow-wrap:anywhere}
+pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:14px;line-height:1.5}
+pre code{background:none;padding:0;font-size:inherit}
+.cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px;margin:8px 0}
+.callout{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;margin:16px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h4{margin:0 0 6px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+ul.check{list-style:none;padding-left:0}
+ul.check li{padding-left:28px;position:relative;margin:6px 0}
+ul.check li::before{content:"";position:absolute;left:2px;top:5px;width:14px;height:14px;border:2px solid var(--muted);border-radius:4px}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:18px 0}
+.diagram svg{width:100%;height:auto;display:block}
+.diagram text{fill:var(--ink);font-family:inherit}
+.diagram .q{fill:var(--muted)}
+.diagram .b{fill:none;stroke:var(--muted);stroke-width:1.25}
+.diagram .m{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.diagram .e{fill:none;stroke:var(--muted);stroke-width:1.25}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+@media (max-width:600px){h1{font-size:27px}h2{font-size:21px}.lead{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">Setup &amp; Deployment Guide</span>
+  <h1>PR Review Agent</h1>
+  <p class="lead">PR Review Agent reviews every pull request in your GitHub repositories: it runs your tests in a secure sandbox, reviews the change with AI, and posts one review with inline comments. No workflow files, no code changes in your repo.</p>
+  <a class="cta" href="https://github.com/apps/pr-review-agent-github/installations/new">Install on GitHub</a>
+</header>
+
+<nav class="toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#choose">Choose your option</a></li>
+    <li><a href="#option-a">Option A: Hosted (about 2 minutes)</a></li>
+    <li><a href="#option-b">Option B: Self-hosted (manual setup)</a></li>
+    <li><a href="#tune">Tune reviews per repository</a></li>
+    <li><a href="#validate">Check it works</a></li>
+    <li><a href="#security">Security and your data</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<h2 id="overview">Overview</h2>
+<p>Your repositories need <b>no workflow file and no secrets</b>: you install the GitHub App, and every pull request is reviewed automatically.</p>
+<div class="cards">
+  <div class="card"><h4>Runs your tests</h4><p>Detects Python, JavaScript/TypeScript, Go and Rust projects and runs their tests in an isolated sandbox.</p></div>
+  <div class="card"><h4>AI review</h4><p>Finds correctness, security, performance and style issues, and links them to failing tests.</p></div>
+  <div class="card"><h4>One clean review</h4><p>One review per commit, with inline comments and one-click suggested fixes.</p></div>
+</div>
+
+<div class="diagram">
+<svg viewBox="0 0 760 304" role="img" aria-label="How a pull request becomes a review">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a8984"/></marker></defs>
+  <text x="24" y="30" font-size="15" font-weight="600">How a pull request becomes a review</text>
+  <g class="e" marker-end="url(#arr)">
+    <path d="M164 140H184" marker-end="url(#arr)"/><path d="M332 140H352" marker-end="url(#arr)"/><path d="M500 140H536" marker-end="url(#arr)"/>
+    <path d="M560 168V224" marker-end="url(#arr)"/><path d="M660 168V224" marker-end="url(#arr)"/>
+    <path d="M610 112V76H90V112" marker-end="url(#arr)"/>
+  </g>
+  <text class="q" x="350" y="68" text-anchor="middle" font-size="11.5">posts one review on the pull request</text>
+  <rect class="b" x="16" y="112" width="148" height="56" rx="8"/><text x="90" y="136" text-anchor="middle" font-size="13" font-weight="600">GitHub</text><text class="q" x="90" y="154" text-anchor="middle" font-size="11.5">PR opened or pushed</text>
+  <rect class="b" x="184" y="112" width="148" height="56" rx="8"/><text x="258" y="136" text-anchor="middle" font-size="13" font-weight="600">API</text><text class="q" x="258" y="154" text-anchor="middle" font-size="11.5">verify + enqueue</text>
+  <rect class="b" x="352" y="112" width="148" height="56" rx="8"/><text x="426" y="136" text-anchor="middle" font-size="13" font-weight="600">Job queue</text><text class="q" x="426" y="154" text-anchor="middle" font-size="11.5">durable, crash-safe</text>
+  <rect class="m" x="536" y="112" width="148" height="56" rx="8"/><text x="610" y="136" text-anchor="middle" font-size="13" font-weight="600">Worker</text><text class="q" x="610" y="154" text-anchor="middle" font-size="11.5">runs the pipeline</text>
+  <rect class="b" x="472" y="224" width="120" height="56" rx="8"/><text x="532" y="248" text-anchor="middle" font-size="13" font-weight="600">Sandbox</text><text class="q" x="532" y="266" text-anchor="middle" font-size="11.5">runs your tests</text>
+  <rect class="b" x="612" y="224" width="120" height="56" rx="8"/><text x="672" y="248" text-anchor="middle" font-size="13" font-weight="600">AI model</text><text class="q" x="672" y="266" text-anchor="middle" font-size="11.5">reviews the diff</text>
+</svg>
+</div>
+
+<h2 id="choose">Choose your option</h2>
+<table>
+  <tr><th></th><th>A. Hosted (we run it)</th><th>B. Self-hosted (you run it)</th></tr>
+  <tr><td><b>Setup time</b></td><td>About 2 minutes</td><td>About 1 hour</td></tr>
+  <tr><td><b>What you do</b></td><td>Install our GitHub App on your repos</td><td>Run the agent on your server, create your own GitHub App, install it</td></tr>
+  <tr><td><b>Server needed</b></td><td>No</td><td>Yes: Linux with Docker</td></tr>
+  <tr><td><b>Where your code is reviewed</b></td><td>Our infrastructure</td><td>Your own network; code never leaves it with a local LLM</td></tr>
+  <tr><td><b>AI model</b></td><td>Provided by us</td><td>Free local Ollama, or your own provider key</td></tr>
+  <tr><td><b>Best for</b></td><td>Teams that want to start now</td><td>Regulated or security-sensitive code</td></tr>
+</table>
+<p>Either way, nothing is added to your repositories and your existing CI stays as it is.</p>
+
+<h2 id="option-a">Option A: Hosted (about 2 minutes)</h2>
+<p>You need admin rights on the repositories (or the organization) you want reviewed.</p>
+<ol>
+  <li>Open the install link: <a href="https://github.com/apps/pr-review-agent-github/installations/new">https://github.com/apps/pr-review-agent-github/installations/new</a>.</li>
+  <li>Pick your <b>personal account or organization</b>.</li>
+  <li>Choose <b>Only select repositories</b> and tick the repos to review (or <b>All repositories</b>).</li>
+  <li>Review the permissions and click <b>Install</b>:
+    <ul>
+      <li>Pull requests: Read and write (to read the PR and post the review)</li>
+      <li>Contents: Read-only (to check out the code and run its tests)</li>
+      <li>Metadata: Read-only (required by GitHub)</li>
+    </ul>
+  </li>
+</ol>
+<p>That's it. The next pull request in those repos is reviewed automatically.</p>
+<p><b>Add or remove repos later:</b> GitHub <b>Settings → Applications → Installed GitHub Apps → PR Review Agent → Configure</b> (for an organization, its Settings → GitHub Apps).</p>
+
+<h2 id="option-b">Option B: Self-hosted (manual setup)</h2>
+<p>Run the agent on your own server. Steps 1 to 3 are done once; step 4 for each repository you add.</p>
+
+<h3>Prerequisites</h3>
+<table>
+  <tr><th>Need</th><th>Detail</th></tr>
+  <tr><td>Host</td><td>Linux server with Docker and the Compose plugin (rootless Docker or gVisor recommended)</td></tr>
+  <tr><td>Public HTTPS URL</td><td>For the webhook: your reverse proxy (nginx, Caddy, a cloud load balancer)</td></tr>
+  <tr><td>AI model</td><td>Ollama on the host with <code>qwen2.5-coder:7b</code> and <code>qwen2.5-coder:1.5b</code>, or a hosted provider key</td></tr>
+  <tr><td>GitHub rights</td><td>Owner or admin of the account or organization that will own the App, and admin on each repository</td></tr>
+  <tr><td>Software</td><td>The PR Review Agent package (<a href="https://github.com/bhaviknagre/PR-REVIEW-AGENT-">github.com/bhaviknagre/PR-REVIEW-AGENT-</a>)</td></tr>
+</table>
+
+<h3>Step 1: Create your GitHub App</h3>
+<div class="callout"><b>Where:</b> the App is created in your GitHub <b>account or organization settings</b>, not inside any repository. Your repositories only receive an install (step 4).</div>
+<ol>
+  <li>Go to <b>Settings → Developer settings → GitHub Apps → New GitHub App</b> (organization settings for an org-owned App).</li>
+  <li><b>Webhook:</b> tick <i>Active</i>. URL <code>https://&lt;your-server&gt;/webhook/github</code>. Secret: a long random string, e.g. <code>openssl rand -hex 32</code>; keep it.</li>
+  <li><b>Repository permissions:</b> Pull requests <i>Read and write</i>, Contents <i>Read-only</i>, Metadata <i>Read-only</i>.</li>
+  <li><b>Subscribe to events:</b> Pull request only.</li>
+  <li><b>Where can this App be installed:</b> Only on this account.</li>
+  <li>Click <b>Create GitHub App</b>, note the <b>App ID</b>, then <b>Generate a private key</b> (downloads a <code>.pem</code> file).</li>
+</ol>
+<p><b>Triggers:</b> pull requests that are <code>opened</code>, <code>synchronize</code>d (new commits), <code>reopened</code> or <code>ready_for_review</code>. A new push cancels that PR's review still in progress and reviews the new commit.</p>
+
+<h3>Step 2: Configure secrets (<code>.env</code>)</h3>
+<p>All secrets live in the server's <code>.env</code> file, never in your repositories. Start with <code>cp .env.example .env</code>.</p>
+<table>
+  <tr><th>Variable</th><th>Required</th><th>Value</th></tr>
+  <tr><td><code>GITHUB_APP_ID</code></td><td>Yes</td><td>App ID from step 1</td></tr>
+  <tr><td><code>GITHUB_PRIVATE_KEY</code> or <code>GITHUB_PRIVATE_KEY_PATH</code></td><td>Yes, exactly one</td><td>The <code>.pem</code> inline (newlines as <code>\n</code>), or a path mounted into the containers</td></tr>
+  <tr><td><code>GITHUB_WEBHOOK_SECRET</code></td><td>Yes</td><td>The webhook secret from step 1</td></tr>
+  <tr><td><code>POSTGRES_PASSWORD</code></td><td>Yes</td><td>A strong password; keep <code>DATABASE_URL</code> consistent with it</td></tr>
+  <tr><td><code>DOCKER_GID</code></td><td>Yes</td><td><code>stat -c %g /var/run/docker.sock</code> on Linux; <code>0</code> on Docker Desktop for macOS</td></tr>
+  <tr><td><code>ADMIN_TOKEN</code></td><td>Recommended</td><td>Bearer token for the admin API</td></tr>
+  <tr><td><code>LLM_REVIEW_MODEL</code> / <code>LLM_API_KEY</code></td><td>No</td><td>Defaults to local Ollama; set your provider's model and key to use a hosted model</td></tr>
+  <tr><td><code>LLM_JOB_BUDGET_USD</code> / <code>LLM_DAILY_BUDGET_USD</code></td><td>No</td><td>Spend caps, defaults 1.0 / 20.0</td></tr>
+  <tr><td><code>ANALYSE_TIMEOUT_SECONDS</code></td><td>No</td><td>AI review time limit, default 1200; raise for slow CPU-only servers</td></tr>
+  <tr><td><code>REQUEST_CHANGES_ON_CRITICAL</code></td><td>No</td><td><code>true</code> to submit "Request changes" when a critical issue is found</td></tr>
+</table>
+
+<h3>Step 3: Deploy</h3>
+<pre><code>git clone https://github.com/bhaviknagre/PR-REVIEW-AGENT-.git pr-review &amp;&amp; cd pr-review
+cp .env.example .env              # fill in step 2 values
+./docker/sandbox/build.sh         # python, node, go, rust sandbox images
+ollama pull qwen2.5-coder:7b
+ollama pull qwen2.5-coder:1.5b
+docker compose up -d --build
+curl -fsS http://localhost:8000/healthz   # {"status":"ok"}</code></pre>
+<ul>
+  <li>Start order is automatic: database and queue first, then migrations, then the API and worker.</li>
+  <li>Put a TLS reverse proxy in front of port 8000. Expose only <code>/webhook/github</code>; keep <code>/admin</code> and <code>/metrics</code> internal.</li>
+  <li>Scale with <code>docker compose up -d --scale worker=N</code>; each worker handles 4 reviews at once by default.</li>
+  <li>Upgrade with <code>git pull &amp;&amp; docker compose up -d --build</code>; migrations run automatically.</li>
+</ul>
+
+<h3>Step 4: Install on your repositories</h3>
+<ol>
+  <li>Open your App's page: <b>Settings → Developer settings → GitHub Apps → your App → Install App</b>.</li>
+  <li>Click <b>Install</b>, choose <b>Only select repositories</b>, and pick the repos to review.</li>
+</ol>
+<p><b>Optional:</b> to block merges on critical findings, enable <i>Require a pull request review</i> in branch protection and set <code>REQUEST_CHANGES_ON_CRITICAL=true</code>.</p>
+<p><b>CI/CD:</b> your repositories need no CI changes. The agent runs as a GitHub App, not as a GitHub Action, so it uses no runner minutes or repository secrets.</p>
+
+<h2 id="tune">Tune reviews per repository (optional)</h2>
+<p>The agent detects your project type and test command on its own. To change its behaviour, add <code>.pr-review.yml</code> at the root of a repository:</p>
+<pre><code>test_commands:
+  ".": ["pytest", "-q"]        # "." = repo root; another folder for a sub-project
+  "web": ["npm", "test"]       # a second project in the web/ folder
+test_timeout_seconds: 180
+ignore: ["docs/**", "migrations/**"]
+categories: [correctness, security, performance]   # also: style
+min_severity: MINOR            # CRITICAL | MAJOR | MINOR | INFO
+tests_disabled: false</code></pre>
+<p>All keys are optional. An invalid file never blocks a review: the agent uses its defaults and says so in the review summary.</p>
+
+<h2 id="validate">Check it works</h2>
+<ul class="check">
+  <li>Open a pull request in an installed repository (a small change is enough)</li>
+  <li>Within a few minutes, the PR shows one review from <b>PR Review Agent</b></li>
+  <li>The review summary lists your test results and findings by severity</li>
+  <li>Findings on changed lines appear as inline comments, some with a suggested fix</li>
+  <li>Push another commit: a fresh review is posted for the new commit</li>
+</ul>
+<p>Self-hosted extras: <code>/healthz</code> returns <code>{"status":"ok"}</code>, <code>/readyz</code> returns <code>200</code>, and the App's <b>Advanced → Recent Deliveries</b> shows <code>202</code> for each pull request.</p>
+
+<h2 id="security">Security and your data</h2>
+<ul>
+  <li><b>Least privilege:</b> the App can read pull requests and code and post reviews. It cannot push code, merge, change settings, or read other repositories.</li>
+  <li><b>Isolated test runs:</b> tests run in a locked-down container with no network except approved package registries, strict memory and CPU limits, and nothing kept after the run.</li>
+  <li><b>Secrets stay out:</b> credentials found in code are masked before anything is stored or posted.</li>
+  <li><b>Where code goes:</b> only to GitHub and the configured AI model. Self-hosted with Ollama, your code never leaves your server. No telemetry.</li>
+  <li><b>Retention:</b> job records are deleted automatically after 30 days.</li>
+  <li><b>Remove access any time:</b> uninstall the App from GitHub <b>Settings → Applications</b>; reviews stop at once.</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+  <tr><th>Symptom</th><th>Cause and fix</th></tr>
+  <tr><td>No review after 15 minutes</td><td>Check the App is installed on that repository. Self-hosted: check the worker logs (<code>docker compose logs worker</code>).</td></tr>
+  <tr><td>Webhook delivery shows <code>401</code></td><td>The webhook secret differs between the App and <code>.env</code>; make them identical and restart.</td></tr>
+  <tr><td>Delivery shows <code>202 ignored</code></td><td>Normal for events that are not reviewed.</td></tr>
+  <tr><td>Database restarts on first start</td><td><code>.env</code> is missing; create it, then <code>docker compose down -v &amp;&amp; docker compose up -d</code> (fresh installs only).</td></tr>
+  <tr><td>Worker unhealthy</td><td>Wrong <code>DOCKER_GID</code>; use <code>stat -c %g /var/run/docker.sock</code> on Linux or <code>0</code> on macOS Docker Desktop.</td></tr>
+  <tr><td>Review times out</td><td>Slow CPU-only AI model; raise <code>ANALYSE_TIMEOUT_SECONDS</code>, use a GPU, or a hosted model.</td></tr>
+  <tr><td>Dependency install times out</td><td>The server cannot reach PyPI quickly; check network access or set <code>SANDBOX_PIP_INDEX_URL</code> to a mirror.</td></tr>
+</table>
+
+<footer>PR Review Agent · Setup &amp; Deployment Guide · October 2026</footer>
+</div>
+</body>
+</html>
