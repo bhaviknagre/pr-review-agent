@@ -6,7 +6,7 @@
 <title>PR Review Agent - Technical Documentation</title>
 <meta name="description" content="Architecture, pipeline, security model, audit results and interfaces of PR Review Agent v1.0.">
 <style>
-:root{--ink:#111827;--mute:#4b5563;--rule:#d1d5db;--soft:#e5e7eb;--brand:#14532d;--brand-h:#1f7a45;--tint:#ecf5ef;--code:#f6f8f7;--red:#b42318;--amber:#b45309;--blue:#1d4ed8;
+:root{--ink:#111827;--mute:#4b5563;--rule:#d1d5db;--soft:#e5e7eb;--brand:#3730a3;--brand-h:#4338ca;--tint:#eef0ff;--code:#f7f7fb;--red:#b42318;--amber:#b45309;--blue:#0369a1;
 --serif:Charter,"Iowan Old Style",Georgia,serif;--sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:20px}
@@ -55,7 +55,7 @@ pre code{border:0;background:none;padding:0;font-size:13px}
 .cb{margin:16px 0 22px;border:1px solid var(--rule);background:var(--code)}
 .cb .fn{font:12px var(--mono);color:var(--mute);border-bottom:1px solid var(--rule);padding:4px 12px;background:#fff;display:inline-block;border-right:1px solid var(--rule)}
 .cb pre{margin:0;padding:12px 14px;overflow-x:auto;line-height:1.55}
-.k{color:#7a3e9d}.s{color:#1f6f43}.c{color:#6b7280;font-style:italic}.f{color:#1d4ed8}
+.k{color:#7a3e9d}.s{color:#1f6f43}.c{color:#6b7280;font-style:italic}.f{color:#0369a1}
 .ba{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0 22px}
 .ba .cb{margin:0;min-width:0}
 .ba .hd{font:700 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-bottom:1px solid var(--rule);background:#fff}
@@ -160,12 +160,12 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <figure>
 <div class="svgw"><svg viewBox="0 0 760 320" role="img" aria-label="Request flow from GitHub through the API, Postgres and Redis to the worker, sandbox and LLM, and back to GitHub" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="13">
 <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker>
-<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#14532d"/></marker></defs>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3730a3"/></marker></defs>
 <rect x="10" y="115" width="100" height="50" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="60" y="145" text-anchor="middle" fill="#111827" font-weight="700">GitHub</text>
-<rect x="160" y="115" width="140" height="50" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="230" y="136" text-anchor="middle" fill="#14532d" font-weight="700">API</text><text x="230" y="153" text-anchor="middle" fill="#111827">/webhook/github</text>
+<rect x="160" y="115" width="140" height="50" fill="#eef0ff" stroke="#3730a3" stroke-width="1.5"/><text x="230" y="136" text-anchor="middle" fill="#3730a3" font-weight="700">API</text><text x="230" y="153" text-anchor="middle" fill="#111827">/webhook/github</text>
 <rect x="350" y="40" width="110" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="405" y="59" text-anchor="middle" font-weight="700" fill="#111827">Postgres</text><text x="405" y="76" text-anchor="middle" fill="#111827">job row</text>
 <rect x="350" y="194" width="110" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="405" y="213" text-anchor="middle" font-weight="700" fill="#111827">Redis</text><text x="405" y="230" text-anchor="middle" fill="#111827">queue</text>
-<rect x="510" y="115" width="100" height="50" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="560" y="145" text-anchor="middle" fill="#14532d" font-weight="700">Worker</text>
+<rect x="510" y="115" width="100" height="50" fill="#eef0ff" stroke="#3730a3" stroke-width="1.5"/><text x="560" y="145" text-anchor="middle" fill="#3730a3" font-weight="700">Worker</text>
 <rect x="650" y="40" width="100" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="700" y="59" text-anchor="middle" font-weight="700" fill="#111827">Sandbox</text><text x="700" y="76" text-anchor="middle" fill="#111827">Docker</text>
 <rect x="650" y="194" width="100" height="46" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="700" y="213" text-anchor="middle" font-weight="700" fill="#111827">LLM</text><text x="700" y="230" text-anchor="middle" fill="#111827">LiteLLM</text>
 <line x1="110" y1="140" x2="158" y2="140" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
@@ -175,8 +175,8 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <line x1="460" y1="214" x2="508" y2="157" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
 <line x1="610" y1="125" x2="648" y2="75" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
 <line x1="610" y1="155" x2="648" y2="205" stroke="#111827" stroke-width="1.5" marker-end="url(#ar)"/>
-<path d="M560,165 L560,282 L60,282 L60,167" fill="none" stroke="#14532d" stroke-width="1.8" marker-end="url(#ag)"/>
-<text x="310" y="274" text-anchor="middle" fill="#14532d" font-weight="700">review posted back (inline comments + summary)</text>
+<path d="M560,165 L560,282 L60,282 L60,167" fill="none" stroke="#3730a3" stroke-width="1.8" marker-end="url(#ag)"/>
+<text x="310" y="274" text-anchor="middle" fill="#3730a3" font-weight="700">review posted back (inline comments + summary)</text>
 <text x="230" y="105" text-anchor="middle" fill="#4b5563">1 verify, persist</text>
 <text x="230" y="190" text-anchor="middle" fill="#4b5563">2 enqueue</text>
 </svg></div>
@@ -249,7 +249,7 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <figure>
 <div class="svgw"><svg viewBox="0 0 780 110" role="img" aria-label="Seven stage pipeline: fetch, detect, test, parse, analyse, aggregate, post" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="14">
 <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker></defs>
-<g stroke="#14532d" stroke-width="1.5" fill="#ecf5ef">
+<g stroke="#3730a3" stroke-width="1.5" fill="#eef0ff">
 <rect x="10" y="35" width="92" height="44"/><rect x="122" y="35" width="92" height="44"/><rect x="234" y="35" width="92" height="44"/><rect x="346" y="35" width="92" height="44"/><rect x="458" y="35" width="92" height="44"/><rect x="570" y="35" width="92" height="44"/><rect x="682" y="35" width="88" height="44"/></g>
 <g text-anchor="middle" fill="#111827" font-weight="700">
 <text x="56" y="62">fetch</text><text x="168" y="62">detect</text><text x="280" y="62">test</text><text x="392" y="62">parse</text><text x="504" y="62">analyse</text><text x="616" y="62">aggregate</text><text x="726" y="62">post</text></g>
@@ -278,10 +278,10 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <h3 id="s3-2"><span class="n">3.2</span>Job state machine</h3>
 <figure>
 <div class="svgw"><svg viewBox="0 0 760 270" role="img" aria-label="Job states: queued to running, then succeeded, failed, superseded, cancelled or dead_letter; dead_letter returns to queued by admin requeue" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="14">
-<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker><marker id="a3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#14532d"/></marker></defs>
+<defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker><marker id="a3g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3730a3"/></marker></defs>
 <rect x="20" y="100" width="110" height="44" fill="#fff" stroke="#111827" stroke-width="1.5"/><text x="75" y="127" text-anchor="middle" font-weight="700" fill="#111827">queued</text>
-<rect x="210" y="100" width="110" height="44" fill="#ecf5ef" stroke="#14532d" stroke-width="1.5"/><text x="265" y="127" text-anchor="middle" font-weight="700" fill="#14532d">running</text>
-<rect x="450" y="8" width="140" height="34" fill="#fff" stroke="#14532d" stroke-width="1.5"/><text x="520" y="30" text-anchor="middle" fill="#14532d" font-weight="700">succeeded</text>
+<rect x="210" y="100" width="110" height="44" fill="#eef0ff" stroke="#3730a3" stroke-width="1.5"/><text x="265" y="127" text-anchor="middle" font-weight="700" fill="#3730a3">running</text>
+<rect x="450" y="8" width="140" height="34" fill="#fff" stroke="#3730a3" stroke-width="1.5"/><text x="520" y="30" text-anchor="middle" fill="#3730a3" font-weight="700">succeeded</text>
 <rect x="450" y="54" width="140" height="34" fill="#fff" stroke="#b45309" stroke-width="1.5"/><text x="520" y="76" text-anchor="middle" fill="#b45309" font-weight="700">failed</text>
 <rect x="450" y="100" width="140" height="34" fill="#fff" stroke="#4b5563" stroke-width="1.5"/><text x="520" y="122" text-anchor="middle" fill="#4b5563" font-weight="700">superseded</text>
 <rect x="450" y="146" width="140" height="34" fill="#fff" stroke="#4b5563" stroke-width="1.5"/><text x="520" y="168" text-anchor="middle" fill="#4b5563" font-weight="700">cancelled</text>
@@ -289,8 +289,8 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <line x1="130" y1="122" x2="208" y2="122" stroke="#111827" stroke-width="1.5" marker-end="url(#a3)"/>
 <g stroke="#111827" stroke-width="1.5" marker-end="url(#a3)" fill="none">
 <line x1="320" y1="110" x2="448" y2="27"/><line x1="320" y1="115" x2="448" y2="71"/><line x1="320" y1="122" x2="448" y2="117"/><line x1="320" y1="130" x2="448" y2="162"/><line x1="320" y1="137" x2="448" y2="209"/></g>
-<path d="M520,226 L520,254 L75,254 L75,146" fill="none" stroke="#14532d" stroke-width="1.8" marker-end="url(#a3g)"/>
-<text x="300" y="246" text-anchor="middle" fill="#14532d" font-weight="700">admin requeue</text>
+<path d="M520,226 L520,254 L75,254 L75,146" fill="none" stroke="#3730a3" stroke-width="1.8" marker-end="url(#a3g)"/>
+<text x="300" y="246" text-anchor="middle" fill="#3730a3" font-weight="700">admin requeue</text>
 <text x="640" y="30" fill="#4b5563" font-size="12">review posted</text>
 <text x="640" y="76" fill="#4b5563" font-size="12">retry returns to queued</text>
 <text x="640" y="122" fill="#4b5563" font-size="12">newer head SHA</text>
