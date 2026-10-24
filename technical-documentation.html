@@ -191,7 +191,7 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <tr><td>Postgres 16</td><td>Jobs, stage attempts, findings, events, LLM cost records.</td></tr>
 <tr><td>Redis 7</td><td>Job queue and rate-limit counters.</td></tr>
 <tr><td>Sandbox images</td><td><code>pr-review-sandbox-python:3.12</code>, <code>-node:20</code>, <code>-go:1.22</code>, <code>-rust:1.83</code>.</td></tr>
-<tr><td>LLM</td><td>Any LiteLLM model. Default <code>ollama/qwen2.5-coder:7b</code>, with a smaller triage model.</td></tr>
+<tr><td>LLM</td><td>Any LiteLLM model. Default <code>ollama/qwen2.5-coder:7b</code>.</td></tr>
 </tbody></table></div>
 
 <h3 id="s2-2"><span class="n">2.2</span>Package layout</h3>
@@ -268,7 +268,7 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <tr><td>fetch</td><td>120 s</td><td>5, 1 s, 60 s</td><td>Reads PR metadata and diff from GitHub, clones the head commit, and checks it still matches the job's SHA. Rejects diffs over 2,000,000 bytes or 300 files.</td></tr>
 <tr><td>detect</td><td>60 s</td><td>3, 1 s, 30 s</td><td>Finds projects and languages, applies <code>.pr-review.yml</code>, and chooses test commands.</td></tr>
 <tr><td>test</td><td>900 s</td><td>2, 5 s, 120 s</td><td>Installs dependencies behind the egress proxy, then runs tests in the sandbox with no network. Each run has its own timeout (300 s by default).</td></tr>
-<tr><td>parse</td><td>60 s</td><td>2, 1 s, 30 s</td><td>Parses test reports, coverage and lint output, and splits the diff into model-sized chunks.</td></tr>
+<tr><td>parse</td><td>60 s</td><td>2, 1 s, 30 s</td><td>Parses test reports and coverage, and splits the diff into model-sized chunks.</td></tr>
 <tr><td>analyse</td><td>1200 s</td><td>4, 2 s, 120 s</td><td>Runs deterministic checks, then asks the model for findings per chunk and category. Output is validated against a strict schema.</td></tr>
 <tr><td>aggregate</td><td>60 s</td><td>3, 1 s, 30 s</td><td>Correlates findings with failing tests, removes duplicates, applies repo filters, picks the review event.</td></tr>
 <tr><td>post</td><td>120 s</td><td>5, 2 s, 60 s</td><td>Posts one review with inline comments and suggestion blocks, under the posting lock.</td></tr>
@@ -346,7 +346,7 @@ footer{margin:64px 0 0;padding-top:14px;border-top:1px solid var(--rule);font-si
 <li>Postgres is the single source of truth. Redis loss delays work but does not lose it.</li>
 <li>State transitions are guarded updates with an event written in the same transaction, so history is always consistent.</li>
 <li>Model output is validated against a frozen, versioned schema. Findings that do not anchor to a changed line are rejected and counted, not hidden.</li>
-<li>Deterministic checks (secret scan, patterns, lint) run beside the model and take precedence over it.</li>
+<li>Deterministic checks (secret scan and patterns) run beside the model and take precedence over it.</li>
 <li>Strict typing (<code>mypy --strict</code>) and a coverage gate in CI.</li>
 </ul>
 
@@ -469,7 +469,7 @@ pr-review costs</code></pre></div>
 <tr><td><code>DATABASE_URL</code></td><td>required</td><td>Postgres connection</td></tr>
 <tr><td><code>REDIS_URL</code></td><td>required</td><td>Redis connection</td></tr>
 <tr><td><code>LLM_REVIEW_MODEL</code></td><td><code>ollama/qwen2.5-coder:7b</code></td><td>Review model</td></tr>
-<tr><td><code>LLM_TRIAGE_MODEL</code></td><td><code>ollama/qwen2.5-coder:1.5b</code></td><td>Cheaper triage model</td></tr>
+<tr><td><code>LLM_TRIAGE_MODEL</code></td><td><code>ollama/qwen2.5-coder:1.5b</code></td><td>Triage model setting (reserved; the pipeline currently uses the review model)</td></tr>
 <tr><td><code>LLM_FALLBACK_MODELS</code></td><td>empty</td><td>Models tried when the primary fails</td></tr>
 <tr><td><code>LLM_API_KEY</code></td><td>unset</td><td>Provider key; not needed for Ollama</td></tr>
 <tr><td><code>OLLAMA_API_BASE</code></td><td><code>http://localhost:11434</code></td><td>Ollama address</td></tr>
@@ -535,7 +535,7 @@ pr-review costs</code></pre></div>
 <dt>Lease</dt><dd>A time-limited claim a worker holds on a running job. If it expires, the sweeper re-queues the job.</dd>
 <dt>Supersede</dt><dd>Mark an older job obsolete because a newer commit arrived on the same pull request.</dd>
 <dt>Dead letter</dt><dd>The state of a job that exhausted its retries or deadline. An operator can requeue it.</dd>
-<dt>Deterministic finding</dt><dd>A finding from a rule-based check (secret scan, pattern or lint) rather than from the model. It wins over an overlapping model finding.</dd>
+<dt>Deterministic finding</dt><dd>A finding from a rule-based check (secret scan or pattern check) rather than from the model. It wins over an overlapping model finding.</dd>
 <dt>Marker</dt><dd>A hidden comment holding the reviewed commit SHA in a posted review. It lets a retry find an existing review instead of posting a second one.</dd>
 </dl>
 </section>
